@@ -1,0 +1,41 @@
+range              [0, 100000000000)
+shards             48
+primes = 1 (24)    128,671,219
+failed rungs       100,442,761
+
+  level J   (Jacobi)                    99,140,159   98.7031%
+  level RC  (other real char)                  454    0.0005%
+  level S   (beyond real chars)                 47    0.0000%
+  level R   (residual miss)              1,302,101    1.2964%
+
+max depth          107  at p = 8,803,369
+escalations        0   (no hit within --rmax; must be 0)
+
+depth histogram:
+  r =    3         69,951,190
+  r =    7         31,335,473
+  r =   11         19,439,771
+  r =   15          3,974,286
+  r =   19          2,441,687
+  r =   23          1,070,808
+  r =   27            187,963
+  r =   31            193,848
+  r =   35             30,784
+  r =   39             25,258
+  r =   43              6,850
+  r =   47              8,811
+  r =   51              1,450
+  r =   55              1,369
+  r =   59                954
+  r =   63                283
+  r =   67                104
+  r =   71                209
+  r =   75                 29
+  r =   79                 50
+  r =   83                 23
+  r =   87                  8
+  r =   91                  3
+  r =   95                  5
+  r =   99                  1
+  r =  103                  1
+  r =  107                  1

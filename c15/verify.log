@@ -1,0 +1,46 @@
+c15 verification: 22 chunks, 8-then-22-way parallel, unmodified verify_cert.py (incl. es_levels four-constraint audit on every SUPPORT line)
+host: c4-highcpu-24 (24 vCPU) -- a different machine than produced the census (NVIDIA L4 host)
+chunk_aa rc=0
+chunk_ab rc=0
+chunk_ac rc=0
+chunk_ad rc=0
+chunk_ae rc=0
+chunk_af rc=0
+chunk_ag rc=0
+chunk_ah rc=0
+chunk_ai rc=0
+chunk_aj rc=0
+chunk_ak rc=0
+chunk_al rc=0
+chunk_am rc=0
+chunk_an rc=0
+chunk_ao rc=0
+chunk_ap rc=0
+chunk_aq rc=0
+chunk_ar rc=0
+chunk_as rc=0
+chunk_at rc=0
+chunk_au rc=0
+chunk_av rc=0
+chunk_aa.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ab.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ac.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ad.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ae.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_af.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ag.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ah.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ai.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_aj.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ak.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_al.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_am.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_an.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ao.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ap.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_aq.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_ar.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_as.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_at.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_au.log: 26622 certificates checked in exact arithmetic; 0 failures
+chunk_av.log: 26615 certificates checked in exact arithmetic; 0 failures

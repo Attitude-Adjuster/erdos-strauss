@@ -1,0 +1,31 @@
+
+=== c15   [0 , 1,000,000,000,000,000)   hard class (6 squares mod 840) ===
+  primes             932,642,160,749
+  failed rungs       557,964,077,974
+    level J  (Jacobi)           553,373,502,288    99.1773%
+    level RC (other real chi)          386,596     0.0001%
+    level S  (beyond real chi)          43,257     0.0000%
+    level R  (residual)          4,590,145,833     0.8227%
+  max depth         155 at p = 172,538,390,619,841   <-- RECORD 107 BEATEN
+  escalated         0  ok
+  pairpath          0  ok
+  level-S by rung   {51: 43257}   still ONLY r=51
+  level-RC by rung  {51: 382218, 75: 4137, 91: 169, 99: 59, 115: 7, 123: 6}
+  depth tail (>=71) {71: 105844, 75: 17264, 79: 21181, 83: 6355, 87: 2767, 91: 692, 95: 778, 99: 297, 103: 363, 107: 133, 111: 80, 115: 19, 119: 14, 123: 6, 127: 18, 131: 8, 135: 3, 139: 1, 155: 1}
+
+=== H1: residual share among failed rungs [hard class] ===
+  X = 10^5     4.6083%  (published)
+  X = 10^15    0.8227%  (new)
+  fit: share ~ 2.128 / (log X)^1.568   R^2 = 1.00000   -> consistent with H1
+  extrapolated at 10^15: 0.8227%
+  extrapolated at 10^18: 0.6181%
+
+=== H1: residual share among failed rungs [(1 mod 24)] ===
+  X = 10^5     2.3419%  (published)
+  X = 10^8     1.0502%  (published)
+  X = 10^10    0.7090%  (published)
+  X = 10^11    0.6016%  (published)
+  fit: share ~ 1.586 / (log X)^1.724   R^2 = 0.99995   -> consistent with H1
+  holdout (fit without 10^11): predicted 0.6039%, actual 0.6016%, error 0.4%
+  extrapolated at 10^15: 0.3531%
+  extrapolated at 10^18: 0.2578%
