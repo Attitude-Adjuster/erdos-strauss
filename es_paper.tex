@@ -1,0 +1,1044 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage[expansion=false]{microtype}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{problem}{Problem}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{observation}[theorem]{Observation}
+
+\newcommand{\jac}[2]{\left(\tfrac{#1}{#2}\right)}
+\DeclareMathOperator{\ord}{ord}
+
+\title{Local Obstructions and Slowly Growing Search Depth\\
+in the Erd\H{o}s--Straus Conjecture:\\
+A Classified Census to $10^{15}$}
+\author{Vincent\thanks{Computations performed with machine assistance; all numerical
+claims are reproducible from the released code and data (\S\ref{sec:data-availability}).
+Code, data, and discussion are hosted at
+\url{https://github.com/Attitude-Adjuster/erdos-strauss}; questions, corrections, and
+reproducibility reports may be filed through the repository's issue tracker.}}
+\date{August 2026 --- working draft, version 6}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+For a prime $p$, write $A=(p+r)/4$ with $r\equiv3\pmod4$ and $q=pA$.  The
+Erd\H{o}s--Straus equation has a solution at this $A$ exactly when a divisor of $q^2$
+lies in the class $-q\pmod r$.  This turns the search into a ladder over the rungs
+$r=3,7,11,\ldots$ and separates failed rungs into four levels: obstruction by the
+Jacobi symbol, by another real character, by the multiplicative support subgroup, or a
+\emph{residual miss} for which the target class is locally available but no divisor
+reaches it.
+
+We classify every failed rung for the $932{,}642{,}160{,}749$ primes below $10^{15}$ in
+the six square classes modulo $840$ not covered by Mordell's identities. Among
+$558$ billion failed rungs, $99.1773\%$ have a Jacobi certificate,
+$0.00008\%$ require a finer local certificate, and $0.8227\%$ are residual.  The finest
+local level occurs only at the single rung $r=51$, in all $43{,}257$ instances, and we prove
+that it must: since $4A=p+r$, the support subgroup always contains $4$---a constraint
+invisible to every real character, because $\chi(4)=\chi(2)^2=1$, but decisive for the
+support test.  It confines that level to ten rungs below $300$, of which $51$ is the
+smallest.  The
+residual share falls monotonically across the census, but its absolute count continues
+to grow.  The maximum first-hit rung also rises, from the long-standing record $107$
+through $131$ to $155$.  The data therefore gives no support for a uniform constant bound on search
+depth; instead it suggests an unbounded, exceptionally slowly growing envelope.
+
+The residual misses are concentrated among divisor-poor shifted values $(p+r)/4$.
+However, a random-occupancy model for the divisors of $q^2$ fails by orders of
+magnitude, showing that multiplicative dependence, not merely divisor density, is the
+central obstacle.  These results are numerical and do not prove a new case of the
+conjecture.  Their contribution is a reproducible decomposition of what local residue
+information explains and what it leaves arithmetically unresolved.
+\end{abstract}
+
+\section{Introduction}\label{sec:intro}
+
+The Erd\H{o}s--Straus conjecture \cite{Erdos1950} asserts that for every integer
+$n \ge 2$ the equation $4/n = 1/x + 1/y + 1/z$ has a solution in positive integers; it
+suffices to treat prime $n = p$. Polynomial congruence identities resolve the equation
+outside a thin set of residue classes. Mordell's identities leave six classes
+$p \equiv 1^2, 11^2, 13^2, 17^2, 19^2, 23^2 \pmod{840}$, all of them squares modulo
+$840$ \cite{Mordell1969}. We denote their union by the \emph{hard class}
+$\mathcal{H}$. The common surrogate $p\equiv1\pmod{24}$ is four times larger and mixes
+these primes with classes already settled by an identity; Section~\ref{sec:hardclass}
+shows that this dilutes the measured residual share. We therefore census
+$\mathcal{H}$ directly. The obstruction is structural: Schinzel and Yamamoto showed
+that no finite list of polynomial congruence identities covers a quadratic-residue
+class \cite{Schinzel2000,Yamamoto1965}.
+
+Fixing $A$ and setting $r = 4A - p$, $q = pA$, solvability is equivalent to the existence of a
+divisor of $q^2$ in the class $-q \bmod r$ (Lemma~\ref{lem:divisor}, classical).
+Failure can then have two very different causes:
+
+\begin{itemize}
+\item \emph{Local residue support.} The divisors of $q^2$ all lie in some proper
+subset of $(\mathbb{Z}/r)^\times$ determined by the residues of the primes of $q$, and
+the target class lies outside it. No search is required; a short certificate settles it.
+\item \emph{A residual miss.} The target class is available to the divisors in every
+local sense, but no divisor happens to land there.
+\end{itemize}
+
+The first is finite group arithmetic. The second is the unresolved part of the search.
+We make this separation explicit through a nested certificate hierarchy, classify it
+exhaustively on $\mathcal{H}$ below $10^{15}$, and release independently checkable
+certificates. The parametrization, character expansion, and Type I/II taxonomy are
+classical; the contribution here is the hierarchy, a structural theorem pinning its finest
+local level to an explicit finite list of rungs (\S\ref{sec:whyS}), the exhaustive
+classification, and what it reveals about the slowly growing residual tail.
+
+\section{The rung ladder and the divisor lattice}\label{sec:ladder}
+
+Fix a prime $p \equiv 1 \pmod 4$ and an integer $A > p/4$, and set
+$r = 4A - p > 0$, $q = pA$. Subtracting $1/A$ from $4/p$ gives $1/B + 1/C = r/q$, and
+completing the product turns this into a hyperbola:
+\begin{equation}\label{eq:hyperbola}
+\frac{4}{p} = \frac{1}{A} + \frac{1}{B} + \frac{1}{C}
+\qquad\Longleftrightarrow\qquad
+(rB - q)(rC - q) \;=\; q^2 .
+\end{equation}
+
+\begin{lemma}[divisor criterion; classical]\label{lem:divisor}
+Positive integer solutions $(B, C)$ of \eqref{eq:hyperbola} correspond bijectively to
+divisors $u \mid q^2$ with $u \equiv -q$ and $q^2/u \equiv -q \pmod r$, via
+$B = (u+q)/r$, $C = (q^2/u + q)/r$. If $\gcd(q, r) = 1$ the second congruence follows
+from the first.
+\end{lemma}
+
+\begin{proof}
+If $(B,C)$ solves \eqref{eq:hyperbola} then $u = rB - q$ divides $q^2$ and is
+$\equiv -q \pmod r$, as is its cofactor; conversely such a $u$ yields integers
+$B, C \ge 1$. When $\gcd(q,r)=1$, $u \equiv -q$ gives
+$q^2/u \equiv q^2(-q)^{-1} \equiv -q \pmod r$.
+\end{proof}
+
+As $A$ runs over integers exceeding $p/4$, $r$ runs over $r \equiv -p \equiv 3 \pmod 4$.
+We call the resulting search order a \emph{ladder} with \emph{rungs}
+$r = 3, 7, 11, \dots$ and $A = (p+r)/4$; rung $r$ \emph{hits} if
+Lemma~\ref{lem:divisor} produces a solution, and the \emph{depth} of $p$ is the
+smallest hitting $r$.
+
+The required coprimality is automatic throughout the range of interest.
+
+\begin{lemma}\label{lem:coprime}
+If $0 < r < 3p$ then $\gcd(q, r) = 1$.
+\end{lemma}
+
+\begin{proof}
+$r < 3p$ is equivalent to $A < p$, so $p \nmid A$ and, $p$ being prime,
+$\gcd(A,p) = 1$. Then $\gcd(A, r) = \gcd(A, 4A - p) = \gcd(A, p) = 1$ and
+$\gcd(p, r) = \gcd(p, 4A - p) = \gcd(p, 4A) = 1$ since $p$ is odd and $p \nmid A$.
+Hence $\gcd(pA, r) = 1$.
+\end{proof}
+
+Thus the second congruence in Lemma~\ref{lem:divisor} is not an additional condition in
+the census.
+
+The divisors of $q^2 = p^2A^2$ form a box lattice: writing $A = p^{e}A'$ with
+$p \nmid A'$ and $A' = \prod_i \ell_i^{a_i}$, they are $u = p^{\,j}d$ with
+$0 \le j \le 2e+2$ and $d \mid A'^2$. Reducing modulo $r$ colors this grid, and
+Lemma~\ref{lem:divisor} asks whether the color $-q$ appears. The classical two-type
+taxonomy is the row coordinate:
+
+\begin{proposition}[types are rows]\label{prop:types}
+Suppose $p \nmid A$ and $\gcd(q,r) = 1$, and let a solution arise from
+$u = p^{\,j}d$ with $j \in \{0,1,2\}$ and $d \mid A^2$. If $j = 1$ then $p \mid B$ and
+$p \mid C$ \textup{(}Type II\textup{)}; if $j \in \{0,2\}$ then $p$ divides exactly one
+of $B, C$ \textup{(}Type I\textup{)}.
+\end{proposition}
+
+\begin{proof}
+$p \mid q$, so $p \mid u + q$ iff $p \mid u$, i.e.\ iff $j \ge 1$; the cofactor has
+$p$-exponent $2-j$. Since $\gcd(r,p)=1$, $p \mid B$ iff $p \mid u+q$.
+\end{proof}
+
+\begin{remark}
+For $p = 73$, $A = 20$ ($r = 7$, $q = 1460$) the lattice contains four solution
+divisors $u \le q$: $u = 10, 80$ in row $j = 0$ (Type I, e.g.\
+$4/73 = 1/20 + 1/210 + 1/30660$) and $u = 73, 584$ in row $j = 1$ (Type II, e.g.\
+$4/73 = 1/20 + 1/219 + 1/4380$). Both classical families sit in one lattice.
+\end{remark}
+
+\section{The character expansion and a hierarchy of certificates}\label{sec:fourier}
+
+Throughout, $\gcd(q,r) = 1$ and
+$N_r(p) = \#\{u \mid q^2 : u \equiv -q \ (\mathrm{mod}\ r)\}$, counting all divisors
+(each unordered solution $\{B,C\}$ contributes two).
+
+\begin{theorem}[divisor count in a class; orthogonality]\label{thm:fourier}
+With $q^2 = \prod_\ell \ell^{\,a_\ell}$,
+\begin{equation}\label{eq:fourier}
+N_r(p) \;=\; \frac{1}{\varphi(r)} \sum_{\chi \ (\mathrm{mod}\ r)}
+\overline{\chi(-q)} \prod_{\ell \mid q}
+\bigl( 1 + \chi(\ell) + \chi(\ell)^2 + \cdots + \chi(\ell)^{a_\ell} \bigr).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+For $u, a$ coprime to $r$, orthogonality \cite[Ch.~4]{Davenport2000} gives
+$\varphi(r)^{-1}\sum_\chi \chi(u)\overline{\chi(a)} = \mathbf{1}[u \equiv a]$. Take
+$a = -q$, sum over $u \mid q^2$, and factor the completely multiplicative $\chi$ across
+the divisor structure of $q^2$.
+\end{proof}
+
+The conjugate in \eqref{eq:fourier} is essential: omitting it counts the class
+$(-q)^{-1}$ rather than $-q$. Table~\ref{tab:verify} checks both evaluations against
+direct enumeration.
+
+The trivial character contributes $\tau(q^2)/\varphi(r) > 0$; the others contribute
+cancellation. For real characters that cancellation is itself a divisor count:
+
+\begin{lemma}\label{lem:interference}
+Let $\chi$ be a real character mod $r$. Since every exponent $a_\ell$ in $q^2$ is even,
+\[
+\sum_{u \mid q^2} \chi(u) \;=\; \prod_{\chi(\ell) = 1}(a_\ell + 1) \;=\; \tau\bigl((q^2)_+\bigr) \;\ge\; 0,
+\]
+where $(q^2)_+$ is the part of $q^2$ supported on primes with $\chi(\ell) = 1$: at
+primes with $\chi(\ell) = -1$ the local factor $1 - 1 + \cdots + 1$ equals $1$.
+\end{lemma}
+
+The obstruction applies to every odd $r$ and every real character.
+
+\begin{corollary}[real-character certificate]\label{cor:blocking}
+Let $r$ be odd with $\gcd(q,r) = 1$ and let $\chi$ be any real Dirichlet character
+mod $r$. If $\chi(\ell) = +1$ for every prime $\ell \mid q$ and $\chi(-q) = -1$, then
+$N_r(p) = 0$.
+\end{corollary}
+
+\begin{proof}
+$\chi$ is completely multiplicative, so every divisor $u \mid q^2$ has $\chi(u) = +1$,
+whereas $\chi$ is constant on residue classes mod $r$ and equals $-1$ at $-q$. Hence no
+divisor lies in that class. Equivalently in \eqref{eq:fourier}: by
+Lemma~\ref{lem:interference} the $\chi$ term is $\chi(-q)\tau(q^2) = -\tau(q^2)$,
+cancelling the trivial term exactly.
+\end{proof}
+
+\begin{remark}[the Jacobi symbol is only one of them]\label{rem:whichchi}
+For odd $r = \prod_{i=1}^{\omega} p_i^{e_i}$ the group $(\mathbb{Z}/r)^\times$ has
+exactly $2^{\omega}$ real characters, namely the products
+$\chi_T(x) = \prod_{i \in T} \jac{x}{p_i}$ over subsets
+$T \subseteq \{1,\dots,\omega\}$. The Jacobi symbol is one of them---but \emph{not}
+in general the full-subset one: $\jac{\cdot}{r} = \chi_{T_0}$ with
+$T_0 = \{i : e_i \text{ odd}\}$, since $\jac{x}{p_i^{e_i}} = \jac{x}{p_i}^{e_i}$. For
+squarefree $r$ these coincide; for $r = 63 = 3^2\cdot 7$ the Jacobi symbol is
+$\jac{\cdot}{7}$ and for $r = 75 = 3\cdot 5^2$ it is $\jac{\cdot}{3}$, and both of
+these rungs occur in our data. For prime $r$ there is a single nontrivial real
+character and the distinction is vacuous; for composite $r$, testing only the Jacobi
+symbol is strictly weaker than testing all real characters. Note also that
+$\jac{x}{r} = +1$ does not mean $x$ is a quadratic residue when $r$ is composite, so
+the hypothesis must be phrased in terms of the character, not of residuosity.
+\end{remark}
+
+The criteria simplify considerably once one uses $r \equiv 3 \pmod 4$, and the
+simplification explains exactly which rungs can exhibit which levels.
+
+\begin{proposition}[criteria in reduced form]\label{prop:reduced}
+Let rung $r$ fail for $p$, and let $H \le (\mathbb{Z}/r)^\times$ be as in
+Definition~\ref{def:hierarchy}. Recall $r \equiv 3 \pmod 4$.
+\begin{enumerate}
+\item A real character $\chi$ mod $r$ certifies the failure if and only if
+$\chi(-1) = -1$ \textup{(}$\chi$ is odd\textup{)} and $H \le \ker\chi$. In
+particular the Jacobi symbol certifies if and only if $\jac{\ell}{r} = +1$ for every
+prime $\ell \mid q$: the hypothesis $\jac{-q}{r} = -1$ is automatic.
+\item $-q \in H$ if and only if $-1 \in H$. Hence the support certificate of
+Definition~\ref{def:hierarchy} says exactly that $-1 \notin H$.
+\item There are exactly $2^{\omega(r)-1}$ odd real characters mod $r$, one of which is
+the Jacobi symbol. Consequently a level-\textup{RC} failure can occur only when
+$\omega(r) \ge 2$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Since $q$ is a product of the primes generating $H$, we have $q \in H$; so if
+$H \le \ker\chi$ then $\chi(q) = 1$ and $\chi(-q) = \chi(-1)$, giving (1). For the
+Jacobi symbol, $\jac{-1}{r} = (-1)^{(r-1)/2} = -1$ because $r \equiv 3 \pmod 4$.
+Part (2) is the same observation: $-q \in H \iff -1 \in H$ because $q \in H$. For (3),
+$\chi_T(-1) = \prod_{i \in T}(-1)^{(p_i-1)/2}$, so $\chi_T$ is odd exactly when $T$
+meets $\{i : p_i \equiv 3 \ (\mathrm{mod}\ 4)\}$ in an odd number of elements; that
+set is nonempty since $r \equiv 3 \pmod 4$, and the number of such $T$ is
+$2^{\omega-1}$. When $\omega = 1$ there is therefore exactly one odd real character,
+which must be the Jacobi symbol, leaving no room for level \textup{RC}.
+\end{proof}
+
+\begin{definition}[certificate hierarchy]\label{def:hierarchy}
+Let rung $r$ fail for $p$ (so $\gcd(q,r) = 1$ by Lemma~\ref{lem:coprime}), and let
+$H \le (\mathbb{Z}/r)^\times$ be the subgroup generated by
+$\{\ell \bmod r : \ell \mid q\}$. The failure has level
+\begin{description}
+\item[J] if the Jacobi symbol $\jac{\cdot}{r}$ satisfies Corollary~\ref{cor:blocking};
+\item[RC] if some real character mod $r$ does, but the Jacobi symbol does not;
+\item[S] if no real character does, but $-q \bmod r \notin H$;
+\item[R] (\emph{residual miss}) otherwise: $-q \in H$, yet the divisors of $q^2$---whose
+exponents are bounded---miss the class.
+\end{description}
+\end{definition}
+
+\begin{proposition}\label{prop:nested}
+The levels are nested. Every J-certificate is an RC-certificate, and every
+RC-certificate implies $-q \notin H$. Level R is what remains after all local support
+information is exhausted.
+\end{proposition}
+
+\begin{proof}
+The first claim is Remark~\ref{rem:whichchi}. For the second, if $\chi$ is trivial on
+every $\ell \mid q$ then $H \le \ker\chi$, while $\chi(-q) = -1$ puts $-q$ outside
+$\ker\chi$.
+\end{proof}
+
+Levels RC and S are finer tests in principle---S detects obstructions from
+higher-order characters and from subgroups of index greater than $2$ that no real
+character sees. Whether they are finer \emph{in practice}, and at what height they
+first bite, is an empirical question answered in \S\ref{sec:data};
+\S\ref{sec:whyS} shows that level S is in addition confined to an explicit finite set of
+rungs.
+
+For the smallest rung, level R is empty unconditionally, because modulo $3$ there are
+only two characters.
+
+\begin{proposition}[rung 3 has no residual misses]\label{prop:rung3}
+Let $p \equiv 1 \pmod{12}$ and $A = (p+3)/4$, so $r = 3$. Then rung $3$ hits unless it
+carries a real-character certificate; explicitly, it fails precisely when $3 \nmid A$
+and every prime $\ell \mid pA$ satisfies $\ell \equiv 1 \pmod 3$.
+\end{proposition}
+
+\begin{proof}
+If $3 \mid A$ take $u = 3$: then $3 \mid q$, $9 \mid q^2$, and both congruences of
+Lemma~\ref{lem:divisor} read $0 \equiv 0 \pmod 3$, so rung $3$ hits. If $3 \nmid A$
+then $\gcd(q,3) = 1$ and \eqref{eq:fourier} has two terms,
+$N_3(p) = \tfrac12\bigl(\tau(q^2) + \chi(-q)\,\tau((q^2)_+)\bigr)$ with $\chi$ the
+nontrivial character mod $3$ (real, so conjugation is immaterial). If some $\ell \mid q$
+has $\chi(\ell) = -1$ then $\tau((q^2)_+) < \tau(q^2)$ and $N_3 > 0$ either way. If
+every $\ell \mid q$ has $\chi(\ell) = 1$ then $\tau((q^2)_+) = \tau(q^2)$ and
+$\chi(-q) = \chi(-1) = -1$, so $N_3 = 0$; since $\jac{\cdot}{3}$ is the only nontrivial
+real character mod $3$, this is a level-J certificate.
+\end{proof}
+
+\subsection{Which rungs can carry a level-S failure}\label{sec:whyS}
+
+Level S is the one level no real-character certificate detects, and empirically
+(\S\ref{sec:data}) it sits at a single rung. Higher-order characters still detect the
+support obstruction, as the centered Fourier formulation in \S\ref{sec:doorways} makes
+explicit. Its confinement is forced by a constraint on $H$ that every real character is
+blind to.
+
+\begin{lemma}[the four-constraint]\label{lem:four}
+$4 \in H$, always.
+\end{lemma}
+
+\begin{proof}
+$4A = p + r$ gives $A \equiv 4^{-1}p \pmod r$, the inverse existing because $r$ is odd.
+Now $H$ contains $p$ and every prime factor of $A$, hence contains $A$ itself; therefore
+$4^{-1} = A\,p^{-1} \in H$ and so $4 \in H$.
+\end{proof}
+
+Any real $\chi$ has $\chi(4) = \chi(2)^2 = 1$, so $4 \in \ker\chi$ automatically and
+Lemma~\ref{lem:four} excludes nothing in Corollary~\ref{cor:blocking}. For the support
+test it is decisive.
+
+\begin{proposition}[when level S is possible]\label{prop:Spossible}
+Write $G = (\mathbb{Z}/r)^\times$. Rung $r$ can carry a level-S failure only if some
+subgroup $H \le G$ satisfies
+\begin{equation}\label{eq:Sadm}
+4 \in H, \qquad -1 \notin H, \qquad (-1)H \in (G/H)^2 ,
+\end{equation}
+and any $H$ satisfying \eqref{eq:Sadm} does produce one whenever it is realized as a
+support subgroup. In particular level S is impossible at every prime rung.
+\end{proposition}
+
+\begin{proof}
+The first condition is Lemma~\ref{lem:four}, the second is
+Proposition~\ref{prop:reduced}(2), and the second also forces the rung to fail, since all
+divisors of $q^2$ lie in $H$. For the third: the real characters trivial on $H$ are
+exactly the characters of $G/H$ of order dividing $2$, and by
+Proposition~\ref{prop:reduced}(1) the failure escapes every real-character certificate
+precisely when all of them take the value $+1$ at $-1$. The intersection of the kernels of
+all order-$\le 2$ characters of a finite abelian group is its subgroup of squares, which
+is the stated condition.
+
+If $r$ is prime then $G$ is cyclic of order $r - 1 \equiv 2 \pmod 4$. Then $-1 \notin H$
+forces $|H|$ odd, so $G/H$ is cyclic of order $2m$ with $m$ odd and $(-1)H$ is its unique
+element of order $2$ --- not a square, since $4 \nmid |G/H|$. No $H$ qualifies.
+\end{proof}
+
+\begin{corollary}\label{cor:Srungs}
+Among $r \equiv 3 \pmod 4$ with $r < 300$, level S is possible only for
+\[
+r \;\in\; \{51,\ 119,\ 123,\ 187,\ 195,\ 219,\ 255,\ 267,\ 287,\ 291\},
+\]
+and $51$ is the smallest by a wide margin. At $r = 51$, $119$ and $123$ the admissible
+subgroup is unique and cyclic of index $4$; at $r = 51$ it is
+$H = \langle 2 \rangle = \{1,2,4,8,13,16,26,32\}$ inside
+$(\mathbb{Z}/51)^\times \cong \mathbb{Z}/2 \times \mathbb{Z}/16$.
+\end{corollary}
+
+Dropping Lemma~\ref{lem:four} from \eqref{eq:Sadm} would admit fourteen rungs below $140$
+alone,
+\[
+15,\ 35,\ 39,\ 51,\ 55,\ 75,\ 87,\ 91,\ 95,\ 111,\ 115,\ 119,\ 123,\ 135,
+\]
+with nothing to distinguish $51$, and with $r = 15$ visited far more often than $r = 51$. The
+four-constraint eliminates eleven of the fourteen. It also disposes of the objection that
+the confinement might be an artifact of which rungs are reached: level RC is observed at
+$r = 51, 75, 91, 99, 115$, so those rungs \emph{are} reached carrying local obstructions,
+yet at $75$, $91$ and $115$ every subgroup that would otherwise satisfy \eqref{eq:Sadm}
+omits $4$, and at $99$ none exists in the first place.
+
+The statement is falsifiable at fixed cost: \textbf{no census, at any height, may report a
+level-S failure at $r = 15, 35, 39, 55, 75, 87, 91, 95, 111, 115$ or $135$}, and the next
+rung that can host one is $r = 119$.
+
+\section{Exhaustive classification below \texorpdfstring{$10^{15}$}{1e15}}\label{sec:data}
+
+The census follows every prime in $\mathcal{H}$ to its first hitting rung and classifies
+all preceding failures by Definition~\ref{def:hierarchy}. It contains
+$932{,}642{,}160{,}749$ primes and $557{,}964{,}077{,}963$ failed rungs below $10^{15}$;
+the $10^{13}$ stage was produced on CPUs and the extension to $10^{15}$ by a GPU
+implementation whose statistics and certificate set are byte-identical to the CPU
+reference on every range where both run. Independent exact-arithmetic and machine-word
+implementations agree on all overlapping ranges, and every emitted fine-certificate or
+deep-prime claim---all $585{,}677$ of them---was checked again in exact arithmetic on a
+machine different from the one that produced it. Section~\ref{sec:computation} gives
+the algorithm and verification protocol.
+
+\begin{table}[ht]\centering
+\caption{Observed maximum search depth $D(p)$, the first hitting rung, on
+$\mathcal{H}$. Long plateaus are followed by small record increments; they are evidence
+of an extreme tail, not of a fixed ceiling.}\label{tab:depth}
+\begin{tabular}{lrr}
+\toprule
+cutoff $X$ & $\max_{p<X}D(p)$ & first record holder in the census \\
+\midrule
+$10^8$    & $107$ & $8{,}803{,}369$ \\
+$10^{10}$ & $107$ & $8{,}803{,}369$ \\
+$10^{11}$ & $107$ & $8{,}803{,}369$ \\
+$10^{12}$ & $111$ & $654{,}730{,}707{,}409$ \\
+$10^{13}$ & $131$ & $6{,}367{,}024{,}012{,}441$ \\
+$10^{14}$ & $131$ & $6{,}367{,}024{,}012{,}441$ \\
+$10^{15}$ & $155$ & $172{,}538{,}390{,}619{,}841$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The depth record remained $107$ across three decades of new primes, then moved to
+$111$, to $131$, and---within the fifteenth decade---to $155$, at
+\[
+p = 172{,}538{,}390{,}619{,}841, \qquad
+\begin{aligned}
+\frac{4}{p} &= \frac{1}{43134597654999} + \frac{1}{48015316516502146586034030} \\[2pt]
+            &\quad + \frac{1}{567275091541152628215802033426900470},
+\end{aligned}
+\]
+and the displayed decomposition is exact. Below $10^{15}$ the depths
+$111$, $115$, $119$, $123$, $127$, $131$ (eight primes), $135$ (three), and $139$ (one)
+are all occupied, while $143$, $147$, and $151$ are not: the record sits beyond a gap,
+as $107$ once did. The long plateaus are therefore sampling effects in an exceptionally
+thin tail. Numerically, the natural expectation is not a constant bound $D(p)\le R$,
+but an unbounded envelope that grows too slowly to estimate reliably from record values
+alone. This is suggestive, not a theorem; the current record is no more a bound than its
+predecessor was.
+
+All failures at $r=3$ are level J, as Proposition~\ref{prop:rung3} predicts. Residual
+misses first appear at $r=11$ and are concentrated at small rungs, while the finer local
+levels occur only on the thin subsequence of composite rungs. Their full counts and
+localization are reported below on the same population as the main census.
+
+\subsection{Which primes are actually hard}\label{sec:hardclass}
+
+Mordell's identities \cite{Mordell1969} settle $4/n$ for every $n$ except possibly those
+$n$ that are \emph{squares} modulo $840$. There are exactly six such classes,
+\begin{equation}\label{eq:hardclass}
+\mathcal{H} \;=\; \{1,\ 121,\ 169,\ 289,\ 361,\ 529\} \pmod{840},
+\end{equation}
+being $1^2, 11^2, 13^2, 17^2, 19^2, 23^2$. All six lie in $1\pmod{24}$, but that coarse
+class contains $24$ reduced classes modulo $840$, only six of which are squares. The
+other three quarters have already been settled, yet their early failed rungs would
+still enter the denominator of any reported failure share.
+
+\begin{observation}[the easy primes contribute only level J]\label{obs:dilution}
+Through $10^{11}$, the censuses of $(1\bmod24)$ and $\mathcal{H}$ have identical depth
+counts at every rung $r\ge11$ and identical level-RC, level-S, and level-R totals. Every
+extra failure from $(1\bmod24)\setminus\mathcal{H}$ occurs at $r=3$ and has a Jacobi
+certificate. Restricting to $\mathcal{H}$ therefore removes only already-explained
+failures and preserves the entire residual and deep-ladder population in the overlap.
+\end{observation}
+
+Including the coarse classes thus understates the residual share. All subsequent depth
+and failure-share statistics use $\mathcal{H}$.
+
+\begin{observation}[the levels on $\mathcal{H}$]\label{obs:hard13}
+The classified census on the hard class is:
+\begin{center}
+\small
+\begin{tabular}{lrrrrrr}
+\toprule
+& primes & level J & level RC & level S & level R & residual share \\
+\midrule
+$p < 10^6$    & $2{,}370$          & $3{,}318$         & $2$      & $0$     & $112$          & $3.2634\%$ \\
+$p < 10^7$    & $20{,}513$         & $24{,}376$        & $2$      & $0$     & $662$          & $2.6438\%$ \\
+$p < 10^8$    & $179{,}468$        & $186{,}590$       & $4$      & $2$     & $4{,}018$      & $2.1079\%$ \\
+$p < 10^9$    & $1{,}587{,}581$    & $1{,}473{,}032$   & $18$     & $4$     & $26{,}317$     & $1.7552\%$ \\
+$p < 10^{10}$ & $14{,}215{,}707$   & $11{,}942{,}520$  & $87$     & $8$     & $181{,}523$    & $1.4972\%$ \\
+$p < 10^{11}$ & $128{,}671{,}219$  & $99{,}140{,}159$  & $454$    & $47$    & $1{,}302{,}101$& $1.2964\%$ \\
+$p < 10^{12}$ & $1{,}175{,}215{,}396$ & $838{,}863{,}859$ & $2{,}279$ & $242$ & $9{,}664{,}186$ & $1.1389\%$ \\
+$p < 10^{13}$ & $10{,}814{,}395{,}686$ & $7{,}211{,}448{,}416$ & $12{,}112$ & $1{,}309$ & $73{,}736{,}922$ & $1.0121\%$ \\
+$p < 10^{14}$ & $100{,}154{,}081{,}439$ & $62{,}821{,}444{,}770$ & $66{,}767$ & $7{,}373$ & $576{,}087{,}976$ & $0.9087\%$ \\
+$p < 10^{15}$ & $932{,}642{,}160{,}749$ & $553{,}373{,}502{,}288$ & $386{,}596$ & $43{,}257$ & $4{,}590{,}145{,}833$ & $0.8227\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Two features stand out.
+\begin{itemize}
+\item \textbf{Level S occurs only at $r = 51$}, across all $43{,}257$ instances, while
+its sibling level RC spreads to
+$r = 51$ ($382{,}218$), $75$ ($4{,}137$), $91$ ($169$), $99$ ($59$), $115$ ($7$) and
+$123$ ($6$). The rung grid does not force this localization --- but
+Corollary~\ref{cor:Srungs} does: $51$ is the smallest rung at which level S is possible
+at all, and $75$, $91$, $99$, $115$ are rungs at which it is impossible. Each of the
+$43{,}257$ therefore has support subgroup $H = \langle 2 \bmod 51 \rangle$, the unique
+admissible one. The appearance of level RC at $r = 123$ sharpens the reachability
+point: $123$ is on the admissible list of Corollary~\ref{cor:Srungs} and is now
+demonstrably reached carrying local obstructions, yet level S still declines to appear
+there --- at $r=123$ the admissible subgroup must arise as an actual support subgroup,
+which evidently remains rare.
+\item \textbf{The residual share falls monotonically}, from $3.26\%$ to $0.8227\%$,
+while the residual count rises from $112$ to $4{,}590{,}145{,}833$. The proportions and
+the counts therefore tell different stories.
+\end{itemize}
+\end{observation}
+
+\subsection{The central empirical thesis}\label{sec:thesis}
+
+We state the thesis the census supports, and---as carefully---the stronger statements it
+does not.
+
+\begin{quote}
+\emph{Local certificates asymptotically dominate the observed failure landscape; the
+remaining risk is concentrated in a sparse, divisor-poor tail.}
+\end{quote}
+
+Formally we separate three hypotheses, which are often conflated and have very
+different status.
+
+\begin{description}
+\item[H1 (local dominance).] Among failed rungs \emph{of primes in $\mathcal{H}$}, the
+residual share tends to zero:
+\[
+\Pr\bigl(\text{level R} \,\big|\, \text{failure},\ p \le X\bigr) \longrightarrow 0
+\qquad (X \to \infty).
+\]
+This is the hypothesis the data speaks to directly. \emph{It does not imply the
+Erd\H{o}s--Straus conjecture}: a vanishing share is compatible with a growing number of
+residual misses and says nothing about whether one prime can miss every rung.
+\item[H2 (divisor threshold).] For each rung $r$ there is a threshold $f(r)$ with
+$\tau(q^2) \ge f(r) \Rightarrow N_r(p) > 0$ whenever the target class is reachable.
+Residual misses still occur at $\tau(q^2)=81$, so no small constant threshold is
+visible. A threshold depending on $r$ remains open, and Section~\ref{sec:occupancy}
+shows why naive occupancy cannot establish one.
+\item[H3 (unbounded but slow depth).] There is no uniform constant $R$ with
+$D(p)\le R$ for every $p$, but the record envelope
+\[
+M(X)=\max_{p<X,\ p\in\mathcal H}D(p)
+\]
+grows exceptionally slowly. The move from $107$ through $131$ to $155$ after long
+plateaus is
+consistent with this hypothesis and inconsistent with treating the old record as a
+natural barrier. Finite computation cannot distinguish genuine unboundedness from a
+larger constant bound, so H3 is deliberately stated as the numerical expectation, not
+as a conclusion.
+\end{description}
+
+\subsection{Evidence for H1}\label{sec:h1}
+
+The cumulative residual share on $\mathcal{H}$ is
+\begin{equation}\label{eq:hseries}
+3.26\%,\ 2.64\%,\ 2.11\%,\ 1.76\%,\ 1.50\%,\ 1.30\%,\ 1.14\%,\ 1.01\%,\ 0.9087\%,\ 0.8227\%
+\qquad (X = 10^6,\ldots,10^{15}).
+\end{equation}
+This decline is monotone, but cumulative censuses are nested and therefore unsuitable
+for a clean holdout test. Differencing them into disjoint decades gives
+\[
+\begin{array}{lccccccccc}
+[10^{k-1}, 10^k) & k=7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\
+\text{residual share} & 2.5454\% & 2.0269\% & 1.7038\% & 1.4608\% & 1.2688\% &
+1.1178\% & 0.9954\% & 0.8953\% & 0.8116\%
+\end{array}
+\]
+which is also monotone. A log-power fit to the first six decades predicts $0.9838\%$
+for $[10^{12},10^{13})$, against the observed $0.9954\%$, a $1.2\%$ relative error on
+a disjoint range; the same family fitted through $10^{13}$ predicts $0.8844\%$ and
+$0.7973\%$ for the two decades that were computed only afterwards, against the observed
+$0.8953\%$ and $0.8116\%$ ($1.2\%$ and $1.8\%$ relative error). This supports H1,
+but it does not establish a law or justify remote extrapolation. Most importantly, the
+falling share coexists with a rapidly increasing residual count.
+
+\subsection{Against random-divisor models: an occupancy test}\label{sec:occupancy}
+
+There is a tempting heuristic for H2: if the $\tau(q^2)$ divisors were spread evenly over
+the $|H|$ reachable classes, the chance of missing one target class would be about
+$e^{-m}$ with $m = \tau(q^2)/|H|$, so a large lattice would force a hit. We tested this
+directly on the recorded $p\equiv1\pmod{24}$ rung sample below $2 \times 10^8$, retaining
+only rungs whose target class is reachable
+(levels HIT and R), binning by $m$ and comparing the observed miss rate to $e^{-m}$
+evaluated at the \emph{lower} edge of each bin---the most generous value the null takes
+anywhere in the bin.
+
+\begin{table}[ht]\centering
+\caption{Observed residual-miss rate against the random-occupancy null on the recorded
+$p\equiv1\pmod{24}$ sample, $p < 2\times10^8$.}
+\label{tab:occ}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+$m = \tau(q^2)/|H|$ & rungs & observed miss rate & $\max e^{-m}$ in bin & excess \\
+\midrule
+$[1,2)$   & $3{,}304$   & $0.4837$   & $3.7 \times 10^{-1}$  & $1.3\times$ \\
+$[2,4)$   & $5{,}543$   & $0.4415$   & $1.4 \times 10^{-1}$  & $3.3\times$ \\
+$[4,8)$   & $44{,}730$  & $0.0194$   & $1.8 \times 10^{-2}$  & $1.1\times$ \\
+$[8,16)$  & $397{,}224$ & $3.8 \times 10^{-3}$ & $3.4 \times 10^{-4}$ & $11\times$ \\
+$[16,32)$ & $130{,}304$ & $1.0 \times 10^{-3}$ & $1.1 \times 10^{-7}$ & $9.2 \times 10^{3}\times$ \\
+$[32,64)$ & $425{,}599$ & $9.4 \times 10^{-6}$ & $1.3 \times 10^{-14}$ & $7.1 \times 10^{8}\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The null is not merely inaccurate but wrong by growing orders of magnitude exactly where
+H2 would need it: at $m \in [16,32)$ residual misses are nearly ten thousand times
+commoner than independence predicts, and beyond that the null predicts essentially none
+while misses still occur. Normalizing by $\varphi(r)$ instead of $|H|$ changes the table
+hardly at all, so this is \emph{not} subgroup confinement---the support subgroup is
+usually everything. It is genuine dependence among the divisors of $q^2$ modulo $r$,
+which is unsurprising on reflection: those divisors are $\prod \ell_i^{f_i}$ with
+$f_i \le 2e_i$, a rigid multiplicative lattice, not a random set.
+
+The consequence for \S\ref{sec:doorways} is concrete: any route to H2 through
+equidistribution of divisors in residue classes---on average, or for typical
+integers---will not do, because the relevant configurations are precisely the atypical
+ones. This sharpens Direction III from ``hard'' to ``hard for an identifiable reason.''
+
+\subsection{How not to model the ladder}\label{sec:model}
+
+The rungs of one prime are not independent trials. They share $p$, while the shifted
+values $(p+3)/4,(p+7)/4,\ldots$ are consecutive integers with correlated
+factorizations. A statistical model must therefore treat the ladder as a
+rung-dependent survival process, not as repeated Bernoulli sampling. The observed
+shares are descriptive marginals; confidence intervals based on independence would be
+misleading.
+
+Residual misses are nevertheless consistently divisor-poor: their median
+$\tau(q^2)$ is $27$, compared with $81$ at hitting rungs in the matched summaries. This
+is a correlation, not a consequence of \eqref{eq:fourier}; a small main term makes a
+zero possible, not probable.
+
+The resulting decomposition of the covering problem is:
+
+\begin{itemize}
+\item a \emph{local layer}, entirely finite: which rungs carry a real-character or
+support certificate is a computation in $(\mathbb{Z}/r)^\times$ given the residues of
+the primes of $q$;
+\item a \emph{residual layer}: prove that level-R misses cannot occupy every rung of
+some prime. This is the content the conjecture actually needs, and H1 does not supply
+it---a vanishing share of failures is not a statement about any individual ladder.
+\S\ref{sec:occupancy} shows the natural probabilistic route is blocked, and
+\S\ref{sec:doorways} that the natural analytic ones are too.
+\end{itemize}
+
+\section{The computation}\label{sec:computation}
+
+The census requires the complete factorization of every shifted value
+$A=(p+r)/4$ encountered before the first hit. Factoring these values independently is
+unnecessarily expensive; their arithmetic-progression structure permits a bulk sieve.
+
+\subsection{Bulk sieve-factorization}\label{sec:bulk}
+
+Within one of the six classes modulo $840$, write $p=p_0+840j$. At a fixed rung,
+\begin{equation}\label{eq:apA}
+A=\frac{p+r}{4}=A_0+210j, \qquad A_0=\frac{p_0+r}{4}.
+\end{equation}
+For every prime $\ell\nmid210$,
+\[
+\ell\mid A \quad\Longleftrightarrow\quad
+j\equiv-A_0\,\overline{210}\pmod\ell.
+\]
+Thus each prime $\ell$ visits exactly the entries it divides. Sieving through
+$\sqrt{A_{\max}}$ leaves a prime cofactor, eliminating primality tests and Pollard rho
+from the main path. Once only a thin set of primes remains on the ladder, the scanner
+switches back to per-value factorization. Against the naive implementation this gives
+speedups of $7.3\times$, $12.8\times$, and $20.3\times$ at $10^{10}$, $10^{11}$, and
+$10^{12}$, respectively, with identical output.
+
+\subsection{Scaling}\label{sec:cost}
+
+The measured per-prime cost grows slowly with height, so total cost is dominated by the
+number of primes. The range splits into independent shards and merges by adding
+histograms. On the machine used for the final run, the complete $10^{13}$ hard-class
+census took $17$ minutes on $12$ physical cores. The extension to $10^{15}$ was
+produced by a CUDA implementation of the same pipeline on a single NVIDIA L4 GPU in
+$2.6$ hours ($\approx 9$\,ns per prime); its statistical output and its certificate
+set are byte-identical to the CPU reference on every range where both were run, which
+is the standard its adoption required. Different window sizes, shard decompositions,
+and the CPU/GPU implementation pair all produce identical statistics.
+
+\subsection{Verification protocol}\label{sec:protocol}
+
+The optimized scanners (CPU and GPU) are checked against an independent
+exact-arithmetic reference and against the earlier per-value implementation. Repeated
+runs, thread counts, window sizes, and independent shardings give identical counts.
+The final shards ($192$ at $10^{13}$, $400$ at $10^{15}$) are checked for gaps and
+overlaps, and every fine-certificate and deep-prime record---$20{,}001$ at $10^{13}$,
+$585{,}677$ at $10^{15}$---is re-derived in exact arithmetic on a machine different
+from the one that produced it. The verifier additionally enforces
+Proposition~\ref{prop:Spossible} mechanically: a level-S claim at an inadmissible
+rung, or one whose support subgroup omits $4$, is rejected as falsifying rather than
+merely erroneous. Each reported solution is verified by the integer identity
+$4ABC=p(AB+BC+CA)$.
+
+\section{Relation to prior work}\label{sec:prior}
+
+The divisor-congruence criterion of Lemma~\ref{lem:divisor} is classical and appears in
+several equivalent guises. Mordell's identities \cite{Mordell1969} and the modular
+equations catalogued by Salez \cite{Salez2014} are, in the present language, individual
+rungs: a polynomial identity valid on a residue class of $p$ is a rule for choosing $A$
+(hence $r$) together with a divisor $u$ that provably lands in the target class.
+Yamamoto \cite{Yamamoto1965} and Schinzel \cite{Schinzel2000} established the
+quadratic obstruction that Corollary~\ref{cor:blocking} localizes to a single rung.
+Elsholtz and Tao \cite{ElsholtzTao2013} give the Type I / Type II taxonomy used in
+Proposition~\ref{prop:types}, together with mean-value theorems for the number of
+solutions; their framework subsumes the parametrization here. Vaughan \cite{Vaughan1970}
+bounded the exceptional set by $\ll N\exp(-c(\log N)^{2/3})$. The conjecture is
+verified numerically to $10^{18}$ \cite{MihneaBogdan2025}, after Swett \cite{Swett1999}
+and Salez \cite{Salez2014}; a recent preprint \cite{Unified2026} obtains density one
+within $n \equiv 1 \pmod 4$ using divisor conditions rather than congruence identities,
+and is the closest antecedent to the perspective taken here.
+
+Accordingly we do \emph{not} claim the divisor-lattice viewpoint as a new framework. Its
+ingredients are known; what we add is the certificate hierarchy of
+Definition~\ref{def:hierarchy}, its exhaustive measurement, and the released
+certificates.
+
+\section{Directions: Fourier interference and its obstacles}\label{sec:doorways}
+
+The Fourier analogy becomes exact after centering the divisor lattice. Write
+$q=\prod_\ell \ell^{e_\ell}$ and let $G_r=(\mathbb Z/r)^\times$. A divisor
+$u=\prod_\ell\ell^{j_\ell}$ of $q^2$ determines, in $G_r$, the centered point
+$u/q=\prod_\ell\ell^{k_\ell}$ with $k_\ell=j_\ell-e_\ell$ and
+$-e_\ell\leq k_\ell\leq e_\ell$. Thus the moving target $-q$ becomes the fixed target
+$-1$. Define the multiplicity measure
+\[
+ \nu_{q,r}(g)=\#\left\{(k_\ell): -e_\ell\leq k_\ell\leq e_\ell,
+       \ \prod_{\ell\mid q}\ell^{k_\ell}=g\text{ in }G_r\right\}.
+\]
+Then $N_r(p)=\nu_{q,r}(-1)$. With the convention
+$\widehat\nu(\chi)=\sum_{g\in G_r}\nu(g)\chi(g)$, and writing
+$\chi(\ell)=e^{i\theta_{\chi,\ell}}$, its finite Fourier transform factors as
+\begin{equation}\label{eq:centered-transform}
+ \widehat\nu_{q,r}(\chi)
+ =\prod_{\ell^{e_\ell}\parallel q}D_{e_\ell}(\theta_{\chi,\ell}),
+ \qquad
+ D_e(\theta)=\sum_{k=-e}^{e}e^{ik\theta}
+ =\frac{\sin((2e+1)\theta/2)}{\sin(\theta/2)},
+\end{equation}
+where the quotient has the limiting value $2e+1$ at $\theta=0$. Fourier inversion
+therefore rewrites Theorem~\ref{thm:fourier} as
+\begin{equation}\label{eq:centered-inversion}
+ N_r(p)=\frac{1}{\varphi(r)}\left\{
+ \tau(q^2)+\sum_{\chi\neq\chi_0}\chi(-1)
+ \prod_{\ell^{e_\ell}\parallel q}D_{e_\ell}(\theta_{\chi,\ell})\right\}.
+\end{equation}
+Every local factor is real, and $\chi(-1)=\pm1$. A miss is consequently literal
+destructive interference: the nonprincipal spectrum cancels the positive mass
+$\tau(q^2)$ exactly.
+
+This gives a deterministic, if not yet uniform, non-cancellation certificate. Put
+\begin{equation}\label{eq:interference-mass}
+ \mathfrak I_r(p)=\sum_{\chi\neq\chi_0}
+ \prod_{\ell^{e_\ell}\parallel q}
+ \frac{|D_{e_\ell}(\theta_{\chi,\ell})|}{2e_\ell+1}.
+\end{equation}
+\begin{proposition}[spectral non-cancellation]\label{prop:spectral-noncancellation}
+The triangle inequality in \eqref{eq:centered-inversion} gives
+\begin{equation}\label{eq:spectral-lower}
+ N_r(p)\ \geq\ \frac{\tau(q^2)}{\varphi(r)}\bigl(1-\mathfrak I_r(p)\bigr),
+ \qquad
+ \mathfrak I_r(p)<1\ \Longrightarrow\ N_r(p)>0.
+\end{equation}
+\end{proposition}
+\begin{proof}
+Each normalized product in \eqref{eq:interference-mass} is the absolute value of the
+corresponding nonprincipal term in \eqref{eq:centered-inversion}, divided by
+$\tau(q^2)$. Subtract their sum from the principal term.
+\end{proof}
+Unlike a random-occupancy model, \eqref{eq:spectral-lower} is exact and retains the
+dependence among divisors. Its weakness is also precise: it discards the signs between
+nonprincipal modes.
+
+The hierarchy now has a spectral reading. Let
+\[
+ B_{q,r}=\prod_{\ell^{e_\ell}\parallel q}
+ \{\ell^{-e_\ell},\ldots,1,\ldots,\ell^{e_\ell}\}\subseteq G_r .
+\]
+Then $N_r(p)>0$ exactly when $-1\in B_{q,r}$. A J- or RC-certificate is a maximally
+coherent odd real mode, trivial on every generator of the support subgroup $H$. At
+level S the same obstruction is detected by an odd higher-order character in the
+annihilator of $H$; it is invisible only if one restricts attention to real characters.
+At level R, $-1\in H$ but the finite exponent box still misses it, so no annihilator
+character separates the target: cancellation is spread among partially damped modes.
+Equivalently, this is a product-set problem. Finite-group product-set estimates turn
+sufficiently small expansion of the successive factors in $B_{q,r}$ into a stabilizer
+subgroup, while expansion without a stabilizer is the combinatorial counterpart of
+Fourier damping. This structure-versus-mixing dichotomy is the main line of evidence
+behind the interference picture.
+
+\paragraph{Direction I: spectral mixing on one rung.}
+The immediate aim is to control \eqref{eq:interference-mass} from the orders of the
+residues $\ell\bmod r$ and the exponents $e_\ell$. If a nonprincipal character is
+nontrivial on several prime factors of $q$, the corresponding normalized Dirichlet
+kernels are damped. One needs enough such damping collectively to make
+$\mathfrak I_r(p)<1$, or a signed refinement of \eqref{eq:spectral-lower} when the
+absolute-value bound is too expensive. Product-set growth offers a dual route: prove
+that $B_{q,r}$ either has a proper stabilizer, already recorded by the hierarchy, or
+covers $-1$ once its exponent box is sufficiently rich. This formulation explains why
+$\tau(q^2)$ alone cannot be a threshold: the phases and their multiplicities matter.
+
+\paragraph{Direction II: decorrelation across the ladder.}
+For $q_r=p(p+r)/4$, let $E_r(p)$ denote the nonprincipal part of
+\eqref{eq:centered-inversion}, including the factor $1/\varphi(r)$, and set
+$\mathcal R_p(R)=\{r\leq R:r\equiv3\pmod4,\ \gcd(q_r,r)=1\}$. Then
+\begin{equation}\label{eq:ladder-interference}
+ \sum_{r\in\mathcal R_p(R)}N_r(p)
+ =\sum_{r\in\mathcal R_p(R)}
+   \frac{\tau(q_r^2)}{\varphi(r)}
+ +\sum_{r\in\mathcal R_p(R)}E_r(p).
+\end{equation}
+(A noncoprime rung already hits by Lemma~\ref{lem:coprime}.) Hence total interference
+cannot persist through rung $R$ if
+\[
+ \left|\sum_{r\in\mathcal R_p(R)}E_r(p)\right|
+ <\sum_{r\in\mathcal R_p(R)}\frac{\tau(q_r^2)}{\varphi(r)}.
+\]
+This is the rigorous form of the proposed ``no total interference'' mechanism. The
+difficulty is that both the group and the signal change with $r$: the signal at rung
+$r$ is built from the factorization of $q_r$, so a standard large-sieve estimate does
+not apply unchanged. The sought-for statement is a cross-rung uncertainty principle
+for these arithmetically coupled spectra.
+
+\paragraph{Direction III: arithmetic input for the moving signal.}
+All analytic routes meet the same shifted-factorization obstacle. The Frobenius class
+of $p$ controls $\chi(p)$, but not the prime factors of $(p+r)/4$. Selberg--Delange
+theory gives useful models for the frequency with which all those factors lie in a
+fixed subgroup---for an index-two condition, a count of order
+$c_rx(\log x)^{-1/2}$ follows from the usual branch-point argument
+\cite[Ch.~II.5]{Tenenbaum2015}---but conditioning on $p$ prime turns the question into a
+multiplicative correlation along a linear form. Chebotarev alone does not see that
+correlation, and sieve methods encounter the parity barrier.
+
+For residual modes, the natural input is divisor distribution: Hooley's
+$\Delta$-function \cite{Hooley1979}, Hall--Tenenbaum \cite{HallTenenbaum1988}, and
+Ford's work on divisors in prescribed ranges \cite{Ford2008}. Those theories control
+typical integers; here one needs uniformity for the structured sequence
+$q_r^2=p^2((p+r)/4)^2$, ultimately for every $p$. No known method makes that jump. The
+Fourier formulation does not remove this obstacle, but identifies the quantities that
+must be controlled: local phase damping on one rung or signed spectral decorrelation
+across several rungs.
+
+\section{Problems}\label{sec:problems}
+
+\begin{problem}[spectral census]\label{prob:sd}
+Augment the census with the normalized local factors in
+\eqref{eq:interference-mass}, the signed error $E_r(p)$, and the margin
+$1-\mathfrak I_r(p)$. Determine how often \eqref{eq:spectral-lower} certifies a hit,
+which characters dominate residual misses, and whether every computed ladder contains
+a rung with $\mathfrak I_r(p)<1$. For coherent J, RC and S modes, compare the observed
+frequencies with Selberg--Delange models that retain the coupling between $p$ and
+$(p+r)/4$.
+\end{problem}
+
+\begin{problem}[structure versus mixing]\label{prob:divisors}
+Prove a nontrivial condition on the orders of $\ell\bmod r$ and the exponents $e_\ell$
+under which $-1\in H$ forces $\mathfrak I_r(p)<1$. Equivalently, give a product-set
+theorem forcing $-1\in B_{q,r}$ once stabilizer obstructions have been excluded.
+Even a result for prime $r$, or for squarefree $q$, would separate genuine subgroup
+confinement from finite-box interference. A bound depending only on $\tau(q^2)$ cannot
+capture this distinction.
+\end{problem}
+
+\begin{problem}[cross-rung non-cancellation]\label{prob:interference}
+Find a range $R=R(p)<p$ on which the signed spectral errors in
+\eqref{eq:ladder-interference} satisfy
+\[
+ \left|\sum_{r\in\mathcal R_p(R)}E_r(p)\right|
+ <\sum_{r\in\mathcal R_p(R)}\frac{\tau(q_r^2)}{\varphi(r)}.
+\]
+Any such estimate for every $p\in\mathcal H$ proves that some rung hits. An average or
+almost-all version would not prove the conjecture, but would test whether the observed
+slow growth of record depth is explained by decorrelation rather than by a fixed bound.
+Identify precisely what replacement for the large sieve can accommodate the moving
+factorizations $q_r=p(p+r)/4$.
+\end{problem}
+
+\begin{problem}\label{prob:bound}
+Determine whether $M(X)=\max_{p<X,\ p\in\mathcal H}D(p)$ is unbounded. Short of that,
+derive a tail estimate for $D(p)$ strong enough to distinguish a slowly diverging record
+from a fixed ceiling, and compare record setters with the smallest spectral margin
+$\min_{r<D(p)}|1-\mathfrak I_r(p)|$ on their failed rungs. A bound $D(p)=o(p)$ for
+every sufficiently large $p$ would already prove the conjecture on $\mathcal H$ after
+finite verification, so it is not a modest intermediate target.
+\end{problem}
+
+\begin{problem}\label{prob:tail}
+Corollary~\ref{cor:Srungs} says which rungs \emph{can} carry a level-S failure; it does
+not say which do. Below $10^{15}$ only $r = 51$ is occupied, though $r = 119$ and $123$ are
+admissible and are visited by every ladder deeper than them --- such ladders exist (the
+record is $155$), and level RC now demonstrably reaches $123$. Estimate the density of primes whose support subgroup at rung $119$ or
+$123$ equals the unique admissible subgroup there, and predict the height at which a second
+occupied rung should first appear. A prediction that survives one further decade would turn
+Corollary~\ref{cor:Srungs} from a constraint into a model.
+\end{problem}
+
+\section{Conclusion}\label{sec:conclusion}
+
+The certificate hierarchy explains almost every failed rung in the hard class, usually
+through the Jacobi symbol alone. What remains is small in proportion but not in count:
+the residual share falls to $0.8227\%$, while $4.59$ billion residual misses remain
+below $10^{15}$. Those misses occur disproportionately at divisor-poor shifted values,
+yet their divisors are far too dependent modulo $r$ for a random-occupancy argument. The
+one level that no real-character certificate detects is not scattered either: because
+$4A = p + r$ puts $4$ in every support subgroup, level S can occur at only ten rungs
+below $300$, and every observed instance sits at the smallest of them.
+
+The depth data carries a separate message. The maximum first-hit rung stayed at $107$
+for a long interval and then rose through $131$ to $155$, with intermediate depths
+populated. This is
+the pattern expected from a very thin extreme tail. It provides no evidence for a
+uniform $O(1)$ depth bound. Our numerical expectation is instead that the record depth
+is unbounded but grows extraordinarily slowly; the census is far too short to identify
+that growth law.
+
+None of this proves the conjecture. A vanishing share of residual failures does not
+prevent one prime from missing every rung, and an observed record is neither an upper
+bound nor a theorem of divergence. The useful outcome is the separation itself: local
+obstructions are finite and certifiable, while the remaining problem concerns the
+structured divisors of $p^2((p+r)/4)^2$ along shifted prime values. That is the part a
+proof must control.
+
+\section*{Data and code availability}\label{sec:data-availability}
+\addcontentsline{toc}{section}{Data and code availability}
+
+The complete public repository is
+\url{https://github.com/Attitude-Adjuster/erdos-strauss}. Questions, corrections, code
+problems, and independent reproduction reports may be submitted at
+\url{https://github.com/Attitude-Adjuster/erdos-strauss/issues}.
+
+The repository contains the exact-arithmetic reference implementation, the
+independent C\raisebox{0.2ex}{\small ++} scanners (the frozen reference and an
+optimized variant proved output-identical against it), the CUDA scanner, the
+certificate verifier---including the mechanical check of
+Proposition~\ref{prop:Spossible}---the per-shard summaries of both censuses ($192$
+shards at $10^{13}$, $400$ at $10^{15}$), the merged depth and level histograms, the
+$20{,}001$ fine-certificate and deep-prime records of the $10^{13}$ census, the
+$585{,}677$ of the $10^{15}$ census, and the verification transcripts. The analysis
+scripts reproduce the cumulative and disjoint-decade statistics. Level-J failures are
+summarized rather than stored individually because each is regenerated directly from
+$(p,A,r)$.
+
+Each solution certificate is a triple $(p,A,u)$ and is checked through
+$4ABC=p(AB+BC+CA)$. The per-shard summaries are published so that small pieces of the
+census can be reproduced independently rather than requiring the full run.
+
+\begin{table}[ht]\centering
+\caption{Numerical check of \eqref{eq:fourier} against direct enumeration, reporting
+both the correct (conjugated) and the mis-transcribed (unconjugated) evaluations; the
+latter counts the class $(-q)^{-1}$ instead of $-q$.}\label{tab:verify}
+\begin{tabular}{rrrlrrr}
+\toprule
+$p$ & $A$ & $r$ & rung status & \eqref{eq:fourier} & unconjugated & direct \\
+\midrule
+   73 &   19 &  3 & fails (J)   & $0$ & $0$ & 0 \\
+   73 &   20 &  7 & hits        & $8$ & $6$ & 8 \\
+   73 &   21 & 11 & hits        & $4$ & $2$ & 4 \\
+   73 &   23 & 19 & fails (J)   & $0$ & $0$ & 0 \\
+ 1129 &  285 & 11 & hits        & $8$ & $8$ & 8 \\
+21169 & 5293 &  3 & fails (J)   & $0$ & $0$ & 0 \\
+21169 & 5300 & 31 & hits        & $6$ & $6$ & 6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection*{Acknowledgement}
+A detailed critical reading identified the composite-$r$ gap in the original
+obstruction statement and sharpened the discussion of the analytic obstacles. It also
+supplied the independent divisor counts used in Table~\ref{tab:verify}.
+
+\begin{thebibliography}{99}
+
+\bibitem{Davenport2000} H.~Davenport,
+\emph{Multiplicative Number Theory}, 3rd ed., rev.\ H.~L.~Montgomery,
+Graduate Texts in Mathematics \textbf{74}, Springer, 2000.
+
+\bibitem{Erdos1950} P.~Erd\H{o}s,
+\emph{Az $\frac{1}{x_1} + \cdots + \frac{1}{x_n} = \frac{a}{b}$ egyenlet eg\'esz
+sz\'am\'u megold\'asair\'ol}, Mat.\ Lapok \textbf{1} (1950), 192--210.
+
+\bibitem{ElsholtzTao2013} C.~Elsholtz and T.~Tao,
+\emph{Counting the number of solutions to the Erd\H{o}s--Straus equation on unit
+fractions}, J.~Aust.\ Math.\ Soc.\ \textbf{94} (2013), 50--105.
+
+\bibitem{Ford2008} K.~Ford,
+\emph{The distribution of integers with a divisor in a given interval},
+Ann.\ of Math.\ \textbf{168} (2008), 367--433.
+
+\bibitem{HallTenenbaum1988} R.~R.~Hall and G.~Tenenbaum,
+\emph{Divisors}, Cambridge Tracts in Mathematics \textbf{90}, CUP, 1988.
+
+\bibitem{Hooley1979} C.~Hooley,
+\emph{On a new technique and its applications to the theory of numbers},
+Proc.\ London Math.\ Soc.\ \textbf{38} (1979), 115--151.
+
+\bibitem{MihneaBogdan2025} S.~Mihnea and D.~C.~Bogdan,
+\emph{Further verification and empirical evidence for the Erd\H{o}s--Straus
+conjecture}, arXiv:2509.00128 (2025).
+
+\bibitem{Mordell1969} L.~J.~Mordell,
+\emph{Diophantine Equations}, Academic Press, 1969.
+
+\bibitem{Salez2014} S.~E.~Salez,
+\emph{The Erd\H{o}s--Straus conjecture: new modular equations and checking below
+$10^{17}$}, arXiv:1406.6307 (2014).
+
+\bibitem{Schinzel2000} A.~Schinzel,
+\emph{On sums of three unit fractions with polynomial denominators},
+Funct.\ Approx.\ Comment.\ Math.\ \textbf{28} (2000), 187--194.
+
+\bibitem{Swett1999} A.~Swett,
+\emph{The Erd\H{o}s--Straus conjecture}, electronic verification to $10^{14}$, 1999--2011.
+
+\bibitem{Tenenbaum2015} G.~Tenenbaum,
+\emph{Introduction to Analytic and Probabilistic Number Theory}, 3rd ed.,
+Graduate Studies in Mathematics \textbf{163}, AMS, 2015.
+
+\bibitem{Unified2026}
+\emph{A unified parametric approach to the Erd\H{o}s--Straus conjecture with explicit
+solutions for a set of integers of natural density one}, arXiv:2602.20036 (2026).
+
+\bibitem{Vaughan1970} R.~C.~Vaughan,
+\emph{On a problem of Erd\H{o}s, Straus and Schinzel},
+Mathematika \textbf{17} (1970), 193--198.
+
+\bibitem{Yamamoto1965} K.~Yamamoto,
+\emph{On the Diophantine equation $\frac{4}{n} = \frac{1}{x}+\frac{1}{y}+\frac{1}{z}$},
+Mem.\ Fac.\ Sci.\ Kyushu Univ.\ Ser.~A \textbf{19} (1965), 37--47.
+
+\end{thebibliography}
+
+\end{document}
