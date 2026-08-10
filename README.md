@@ -37,7 +37,7 @@ of rungs (`51, 119, 123, 187, 195, 219, 255` below the scanner's cap), of which 
 | `verify_cert.py` | exact-arithmetic re-derivation of every emitted certificate |
 | `analyze_census.py` | level breakdown, residual-share fits, level-S localisation |
 | `es_levels.py` | derives the admissible level-S rung set (the four-constraint) |
-| `cuda/` | CUDA port (~9 ns/prime on one NVIDIA L4; ~90× one CPU core) |
+| `cuda/` | CUDA port (~9 ns/prime on one NVIDIA L4; ~90× one CPU core) — `cuda/README.md` documents the architecture and the reasoning behind it |
 | `c15/` | **the 10¹⁵ census**: `MERGED.txt`, `interesting.txt` (585,677 certificates, all re-verified in exact arithmetic — `verify.log`), `ANALYSIS.txt` |
 | `c13/` | the 10¹³ census, same layout |
 | `c_10^k/` | lower-height censuses, same format |
