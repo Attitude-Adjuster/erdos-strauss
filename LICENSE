@@ -12,8 +12,11 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-The census data files (c13/, c_*/): to the extent possible these are released
-under CC BY 4.0; cite the accompanying paper when reusing them.
+The data files (everything under data/ --- the census output, the verification
+run records, and the re-derivation evidence): to the extent possible these are
+released under CC BY 4.0; cite the accompanying paper when reusing them. The
+compiled binaries in data/rederive/binaries/ are software, not data, and remain
+under the MIT terms above.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
