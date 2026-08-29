@@ -1,0 +1,2 @@
+independent checks: 8284620 certificates; 0 composite, 0 out of band, 0 outside the hard class
+verified: 8284620 RUNG, 0 SOLVED; 0 bad, 0 survivors

@@ -1,0 +1,2 @@
+RUNG 2031121 507783 11 579
+SUMMARY lo=1000000 hi=10000000 wheelM=2042040 lanes=2308 mmax=10000 ucert_rmax=63 ucert_umax=64 wheel_pmin=255254 classes_sha256=a77b2187201ff96ff3ecf822150f4152d841941deeb0cf616238bcbb0a648bbc positions=10159 covered=9863 sieved=0 mr=296 composite=295 rung=1 direct=0 survivors=0
